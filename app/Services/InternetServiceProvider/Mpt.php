@@ -2,7 +2,9 @@
 
 namespace App\Services\InternetServiceProvider;
 
-class Mpt
+use App\Interfaces\InternetServiceProviderInterface;
+
+class Mpt implements InternetServiceProviderInterface
 {
     protected $operator = 'mpt';
 

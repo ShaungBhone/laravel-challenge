@@ -11,23 +11,6 @@ class PostController extends Controller
 {
     public function list()
     {
-        // $posts = Post::get();
-
-        // $data = collect();
-        // foreach ($posts as $post) {
-        //     $data->add([
-        //         'id' => $post->id,
-        //         'title' => $post->title,
-        //         'description' => $post->description,
-        //         'tags' => $post->tags,
-        //         'like_counts' => $post->likes->count(),
-        //         'created_at' => $post->created_at,
-        //     ]);
-        // }
-
-        // return response()->json([
-        //     'data' => $data,
-        // ]);
         $posts = Post::withCount('likes')->get();
 
         return PostResource::collection($posts);
@@ -35,51 +18,52 @@ class PostController extends Controller
 
     public function toggleReaction(Request $request)
     {
-        $request->validate([
-            'post_id' => 'required|int|exists:posts,id',
+        $validatedData = $request->validate([
+            'post_id' => 'required|integer|exists:posts,id',
             'like' => 'required|boolean',
         ]);
 
-        $post = Post::find($request->post_id);
+        $post = Post::find($validatedData['post_id']);
         if (!$post) {
             return response()->json([
                 'status' => 404,
-                'message' => 'model not found',
+                'message' => 'Model not found',
             ]);
         }
 
         if ($post->user_id == auth()->id()) {
             return response()->json([
                 'status' => 500,
-                'message' => 'You cannot like your post',
+                'message' => 'You cannot like your own post',
             ]);
         }
 
-        $like = Like::where('post_id', $request->post_id)
+        $like = Like::where('post_id', $validatedData['post_id'])
             ->where('user_id', auth()->id())
             ->first();
-        if ($like && $like->post_id == $request->post_id && $request->like) {
+
+        if ($like && $validatedData['like']) {
             return response()->json([
                 'status' => 500,
-                'message' => 'You already liked this post',
+                'message' => 'You have already liked this post',
             ]);
-        } elseif ($like && $like->post_id == $request->post_id && !$request->like) {
+        } elseif ($like && !$validatedData['like']) {
             $like->delete();
 
             return response()->json([
                 'status' => 200,
-                'message' => 'You unlike this post successfully',
+                'message' => 'You have unliked this post successfully',
+            ]);
+        } elseif (!$like && $validatedData['like']) {
+            Like::create([
+                'post_id' => $validatedData['post_id'],
+                'user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'You have liked this post successfully',
             ]);
         }
-
-        Like::create([
-            'post_id' => $request->post_id,
-            'user_id' => auth()->id(),
-        ]);
-
-        return response()->json([
-            'status' => 200,
-            'message' => 'You like this post successfully',
-        ]);
     }
 }

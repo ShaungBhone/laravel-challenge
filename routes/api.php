@@ -1,10 +1,7 @@
 <?php
 
 use App\Http\Controllers\InternetServiceProviderController;
-use App\Http\Controllers\JobController;
-use App\Http\Controllers\LoginController;
-use App\Http\Controllers\PostController;
-use App\Http\Controllers\StaffController;
+use App\Http\Controllers\{JobController, LoginController, PostController, StaffController};
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,11 +18,15 @@ use Illuminate\Support\Facades\Route;
 Route::post('login', [LoginController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('posts', [PostController::class, 'list']);
-    Route::post('posts/reaction', [PostController::class, 'toggleReaction']);
+    Route::controller(PostController::class)->group(function () {
+        Route::get('posts', 'list');
+        Route::post('posts/reaction', 'toggleReaction');
+    });
 
-    Route::post('mpt/invoice-amount', [InternetServiceProviderController::class, 'getMptInvoiceAmount']);
-    Route::post('ooredoo/invoice-amount', [InternetServiceProviderController::class, 'getOoredooInvoiceAmount']);
+    Route::controller(InternetServiceProviderController::class)->group(function () {
+        Route::post('mpt/invoice-amount', 'getMptInvoiceAmount');
+        Route::post('ooredoo/invoice-amount', 'getOoredooInvoiceAmount');
+    });
 
     Route::post('job/apply', [JobController::class, 'apply']);
 
